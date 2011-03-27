@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<!-- UNSCROLL! -->
+- Underwriter has it on his desk
+- 
+<html>
+  <head>
+    <title>Tweet Search Timeline</title>
+    <script src="https://www.google.com/jsapi?key=ABQIAAAAHnb6NNR5iexrPvHjq3US8BT61MdkYCaUnYw38JbAZxRDiQH0xxRYUkTPd_7E-5BRAYeeQ2LFsqxUZw" type="text/javascript"></script> 
+    <script type="text/javascript"> 
+      google.load("jquery", "1.5.1");
+      google.load("jqueryui", "1.8.10");
+    </script> 
+    <script src="js/jquery-tmpl/jquery.tmpl.min.js" type="text/javascript"></script> 
+    <script src="data.js" type="text/javascript"></script> 
+
+    <style type="text/css">
+body,tr,td  {
+   font:10pt Verdana;
+}
+body {
+    padding:0;margin:0;
+    
+}
+div.tweet-outer {
+}
+div.tweet-inner {
+    margin-top:15px;
+    background:white;
+    border-radius:5px;
+    -moz-box-shadow: 3px 3px 5px #888;
+    -webkit-box-shadow: 3px 3px 5px #888;
+    box-shadow: 3px 3px 5px #888;
+    border:1px solid #44a;
+    margin-left:15px;
+}
+div.tweet {
+    margin:5px;
+    min-height:60px;
+    background:white;
+    color:black;
+}
+div.padder {
+    float:left;
+    border-right:10px solid #eee;
+    margin-right:4px;
+}
+img.tweet {
+    -moz-box-shadow: 1px 1px 1px #888;
+    -webkit-box-shadow: 1px 1px 1px #888;
+    box-shadow: 1px 1px 1px #888;
+    border-left:1px solid black;
+    border-top:1px solid black;
+    border-bottom:2px solid gray;
+    border-right:2px solid gray;
+    border-radius:15px;
+    float:left;
+    margin:-18px 10px 0 -15px;
+    height:25px;
+
+}
+
+a.user {
+    z-index:9;
+    display:block;
+    float:left;
+    border-radius:3px;
+    text-decoration:none;
+    background:#ccc;
+    color:black;
+    font-weight:bold;
+    font-size:7pt;
+    padding:1px 4px 3px 4px;
+    margin:-16px 0 0 -4px;
+}
+
+a.user:hover {background:red;}
+
+
+div.current {border:1px solid red;}
+div.current,div.current div.tweet {
+    background:#ffffff;color:#800;}
+
+div.current {
+    -moz-box-shadow: 0px 0px 4px #800;
+    -webkit-box-shadow: 0px 0px 4px #800;
+    box-shadow: 0px 0px 4px #800;
+
+}
+
+div.current a {
+   color:black;
+   text-decoration:underline;
+}
+div.tweeter {
+    margin-right:10px;
+    font-weight:bold;
+    min-height:20px;
+    border-right:1px solid black;
+    border-bottom:1px solid gray;
+    background:#eee;
+    margin:0;
+    margin-right:10px;
+    float:left;
+
+}
+
+
+div.current div.tweeter {
+   background:white;
+   color:black;
+}
+div.current div.tweeter a {
+   color:black;
+}
+div.tweeter a {
+    text-decoration:none;
+    color:darkblue;
+}
+#timeline {
+/*    max-width:100%;
+      max-height:700px;
+      overflow:auto;
+      border-bottom:2px solid #ccc;
+*/
+}
+table#map {
+    -moz-box-shadow: 5px 5px 5px #ccc;
+    -webkit-box-shadow: 5px 5px 5px #ccc;
+    box-shadow: 5px 5px 5px #ccc;
+    opacity:.9;
+    height:100px;
+    max-height:100px;
+    position:fixed;
+    overflow:hide;
+    border:1px solid black;
+    z-index:1;
+    top:0px;
+    left:0px;
+    border-spacing:0px 1px;
+    background:#cc8;
+    width:100%;
+}
+table#map td {
+    padding:3px 0px 0px 0px;
+border-right:1px solid gray;
+}
+table#map td.y {
+    background:#ffe;
+}
+table#map td.n {}
+table#map td.m {
+    background:red;
+}
+
+
+#cursor {
+    z-index:100;
+    background:white;
+    opacity:.6;
+    position:fixed;
+    top:0;
+    left:0;
+    border:3px solid black;
+    border-radius:5px;
+    padding:10px;
+
+}
+
+
+#timeline-table {
+   position:fixed;
+    top:100px;
+   border-collapse:collapse;
+}
+#timeline-table tr td {
+    margin:0;
+    padding:0;
+    color:#fff;
+    top:100px;
+    border-right:1px solid #ccc;
+    z-index:-10;
+    height:100px;
+    vertical-align:top;
+}
+td.mod1 {
+   background:#eee;
+}
+a.handle {
+   text-decoration:none;
+   font-weight:bold;
+   color:black;
+   color:blue;
+}
+th {height:25px;background:#777;color:white;text-align:left;padding-left:0px;}
+
+#timeline {
+    top:140px;
+    left:50px;
+    position:fixed;
+}
+div.time {
+    color:#aaa;
+    float:right;
+}
+
+</style>
+
+</head>
+<body>
+
+
+<div id="bitmap"><div id="cursor"></div></div>
+
+
+
+<div id="timeline"></div>
+
+<script type="text/javascript"> 
+    $(window).load(function() {
+
+        var HEIGHT = 75;
+        var TWEET_HEIGHT = 15;
+        // Math.ceil($(window).height()/HEIGHT);
+        var TIME_WIDTH = 100;
+        var WIDTH_MULTIPLIER = 2;
+        var WIDTH = TIME_WIDTH * WIDTH_MULTIPLIER;
+        var TD_WIDTH=TIME_WIDTH - 2;
+        var bitmap = [];
+        
+        function formatMinutes(mins) {
+            return mins < 10 ? '0' + "" + mins : mins;
+            
+        }
+
+        function extractEvents(data) {
+            // Extract events from the Twitter timeline
+            var first = new Date();
+            var last = 0;
+            var tweets = Array();
+            
+            $(data.results).each(function(e){
+                var tin = $(this)[0];
+                var date = Date.parse(tin.created_at);
+                first = date < first ? date : first;
+                last = date > last ? date : last;
+                tin.date = new Date(date);
+                tweets.push(tin);
+            });
+            function sortByTimeStamp(a,b) {
+                var x = a.date;
+                var y = b.date;
+                return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+            }
+            var tweets_sorted = tweets.sort(sortByTimeStamp);
+            return {'first':first,'last':last,'tweets':$(tweets_sorted)};
+        }
+        var intervalLevel = 1;
+
+
+        function getUrl(name, date) {
+            return 'http://search.twitter.com/search.json?&rpp=200&q=' + name + '&callback=?';
+        }
+
+
+        function urlIze(text) {
+            var exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+            var url_text = text.replace(exp,"<a href='$1'>$1</a>"); 
+            var texp = /(@[-A-Z0-9_]+)/ig;
+            return url_text.replace(texp,"<a class=\"handle\" href='?$1'>$1</a>"); 
+        }
+
+        // http://stackoverflow.com/questions/3688504/sliding-div-to-auto-height
+        function getElementHeight(el)
+        {
+            var styles = {
+                visibility: el.style.visibility,
+                height: el.style.height,
+                position: el.style.position,
+                display: el.style.display
+            };
+            el.style.visibility = "hidden";
+            el.style.height = "auto";
+            el.style.position = "absolute";
+            el.style.display = "block";
+            var height = el.offsetHeight;
+            el.style.display = styles.display;
+            el.style.position = styles.position;
+            el.style.height = styles.height;
+            el.style.visibility = styles.visibility;
+            return height;
+        }
+
+        function layout(data) {
+            var tl = $("#timeline");
+            var tweets = []
+            tweets = extractEvents(data);
+
+            var span = tweets.last - tweets.first;
+            var hour =  1 * 60 * 60 * 1000;
+
+            var mod = tweets.first % hour;
+            var first_time_unit = tweets.first - mod;
+
+            var hours = Math.ceil(span/hour) + 2;
+            var days = hours/24;
+            var weeks = days/7;
+
+            for (var i = 0; i <= HEIGHT; i++) {
+                bitmap[ i ] = [ ];
+                for (var j = 1; j < hours; j++) {
+                    bitmap[ i ][ j ] = 0;
+                }
+            }
+            $('#timeline').width( 200 + TIME_WIDTH * hours );
+            $('#timeline').height( 200 + TWEET_HEIGHT * HEIGHT );
+
+
+            var table_a = Array();
+            table_a.push('<tr class="top">');
+            // hourly
+            for (var j=0; j<hours;j++) {
+                var count = first_time_unit + ( j * hour );
+                var date = new Date(count);
+                table_a.push('<th id="'+j+'">'+ (1+date.getMonth()) +'/'+date.getDate()+' '+date.getHours() + ':'  + formatMinutes(date.getMinutes()) + '</th>');
+            }
+            table_a.push('</tr>');
+            var timeline = $('<table id="timeline-table"></table>');
+            timeline.append(table_a.join(''));
+            $("body").append(timeline);        
+            timeline.css({marginLeft:'0px'});
+
+
+            $("th").css({'min-width':TD_WIDTH,'max-width':TD_WIDTH});
+            
+            var counters = Array();
+
+            $.template("tweetTemplate",'<div class="tweet-outer"><div class="tweet-inner${is_current}"><div class="tweet"><img class="tweet" src="${img}"/><a class="user" href="?@${user}">${user}</a></a> <div class="time">${hours}:${mins}</div>{{html text}}</div></div></div>');
+
+
+            tweets.tweets.each(function(i){
+
+                var t = this;
+
+                // MAKE THE TWEET
+
+                // Is this the current user (dumb)
+                var is_current = '';
+                var rep = 1;
+                if (t.from_user.toLowerCase()==name.toLowerCase()) {
+                    is_current=' current';
+                    rep = 2;
+                }
+                                    
+
+
+                var tweetData = { is_current: is_current,
+                                  img:        t.profile_image_url,
+                                  user:       t.from_user,
+                                  hours:      t.date.getHours(),
+                                  mins:       formatMinutes(t.date.getMinutes()),
+                                  text:       urlIze(t.text)
+                            }
+                tweet = $.tmpl("tweetTemplate", tweetData);
+
+                var offset = (t.date - first_time_unit)/hour;
+                var left = Math.floor(offset);
+
+                var padding = Math.floor(TD_WIDTH * (offset - left));
+                tweet.css({paddingLeft:padding});
+                tweet.width(WIDTH+padding);
+
+                tl.append(tweet);
+
+                place = function(el, conf) {
+                    /* 
+
+                       This function places arbitrary shapes on a
+                       grid with the intent of cramming as many
+                       arbitrary shapes on that grid as can fit and
+                       make sense.
+
+                       - Take an element
+                       - Measure its pixel dimensions X and Y
+                       - Divide the width X by the width a single block
+                       - Divide the height Y by the height of a single block
+
+                       - Either:
+
+                         - Determine an X_offset based on date/time
+
+                         - Ignore the X_offset and just find some room on the grid
+
+                       - Then scan across, starting at the [X_offset,0] coordinate.
+                       
+
+                       STARTING STATE
+                       +-----------------+
+                       |1|2|3|4|5|6|7|8|9|
+                       +------------------
+                       | | | | | | | | | |
+                       |-----------------|
+                       | | | | | | | | | |
+                       |-----------------|
+                       | | | | | | | | | |
+                       |-----------------|
+                       | | | | | | | | | |
+                       +------------------
+
+                       REQUEST: place a 1x2 element A aligned to position X4
+                       +-----------------+
+                       |1|2|3|4|5|6|7|8|9|
+                       +------------------
+                       | | | |A|A| | | | |
+                       |-----------------|
+                       | | | | | | | | | |
+                       |-----------------|
+                       | | | | | | | | | |
+                       |-----------------|
+                       | | | | | | | | | |
+                       +------------------
+
+                       REQUEST: place a 2x2 element B aligned to position X5
+                       +-----------------+
+                       |1|2|3|4|5|6|7|8|9|
+                       +------------------
+                       | | | |A|A| | | | |
+                       |-----------------|
+                       | | | | |B|B| | | |
+                       |-----------------|
+                       | | | | |B|B| | | |
+                       |-----------------|
+                       | | | | | | | | | |
+                       +------------------
+
+                       REQUEST: place a 1x2 element C aligned to position X1
+                       +-----------------+
+                       |1|2|3|4|5|6|7|8|9|
+                       +------------------
+                       |C|C| |A|A| | | | |
+                       |-----------------|
+                       | | | | |B|B| | | |
+                       |-----------------|
+                       | | | | |B|B| | | |
+                       |-----------------|
+                       | | | | | | | | | |
+                       +------------------
+
+                       REQUEST: place a 3x3 element D aligned to position X2
+                       +-----------------+
+                       |1|2|3|4|5|6|7|8|9|
+                       +------------------
+                       |C|C| |A|A| | | | |
+                       |-----------------|
+                       | |D|D|D|B|B| | | |
+                       |-----------------|
+                       | |D|D|D|B|B| | | |
+                       |-----------------|
+                       | |D|D|D| | | | | |
+                       +------------------
+
+
+                       REQUEST: place a 5x1 element E aligned to position X5
+                       +-----------------+
+                       |1|2|3|4|5|6|7|8|9|
+                       +------------------
+                       |C|C| |A|A| | | | |
+                       |-----------------|
+                       | |D|D|D|B|B| | | |
+                       |-----------------|
+                       | |D|D|D|B|B| | | |
+                       |-----------------|
+                       | |D|D|D|E|E|E|E|E|
+                       +------------------
+
+                       If an element can't be placed for lack of
+                       room, it does not appear on the
+                       timeline. This is a problem to be solved.
+
+
+                     */
+                    // data = {width:width, height:height, aligned:false}
+                    var width = Math.ceil(el.outerWidth()/TIME_WIDTH);
+                    var height = Math.ceil(getElementHeight(el[0])/TWEET_HEIGHT);
+
+                    var element_top = 0;
+                    for ( var i = 0; i < HEIGHT; i++ ) {
+                        var checked = 0;
+                        
+
+                        // Look to the right; see what we got. If we
+                        // find that any blocks are taken we go down
+                        // the next block.
+                        for (var j = left; j <= left + width; j++ ) {
+                            // And scan down by height, too.
+                            for ( var k = 0; k < height; k++ ) {
+                                if (bitmap[ i + k ] && bitmap[ i + k ][ j ]) {
+                                    checked = 1;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (!checked) {
+                            element_top = i + 1;
+                            for ( var j = left; j < left + width; j++ ) {
+                                for ( var k = 0; k < height; k++ ) {
+                                    if ( bitmap[ i + k ] ) {
+                                        bitmap[ i + k ][ j ] = rep;
+                                    }
+                                    else {
+                                        break;
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    if (element_top) {
+                        el.css({ position:'absolute',
+                                    marginLeft:(TD_WIDTH * (left))+'px',
+                                    marginTop:(top * (TWEET_HEIGHT))+'px' });
+                    }
+                    else {
+                        tweet.hide();
+                    }
+                }
+
+                // NOW PLACE IT
+
+                var width = 0;
+                var height = 0;
+                width = Math.ceil(tweet.outerWidth()/TIME_WIDTH);
+                height = Math.ceil(getElementHeight(tweet[0])/TWEET_HEIGHT);
+
+                // Scan down
+                var top = 0;
+                for ( var i = 0; i < HEIGHT; i++ ) {
+                    var checked = 0;
+                    
+                    // Look to the right; see what we got
+                    for (var j = left; j <= left + width; j++ ) {
+                        // And down by height
+                        for ( var k = 0; k < height; k++ ) {
+                            if (bitmap[ i + k ] && bitmap[ i + k ][ j ]) {
+                                checked = 1;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!checked) {
+                        top = i + 1;
+                        for ( var j = left; j < left + width; j++ ) {
+                            for ( var k = 0; k < height; k++ ) {
+                                if ( bitmap[ i + k ] ) {
+                                    bitmap[ i + k ][ j ] = rep;
+                                }
+                                else {
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+                if (top) {
+                    tweet.css({ position:'absolute',
+                                marginLeft:(TD_WIDTH * (left))+'px',
+                                marginTop:(top * (TWEET_HEIGHT))+'px' });
+                }
+                else {
+                    tweet.hide();
+                }
+
+            });
+
+          
+
+            row = Array();        
+            row.push('<table id="map">');
+            for (i=0;i<bitmap.length;i+=HEIGHT/15) {
+                row.push('<tr>');
+                var a = bitmap[i]
+                for (j=0;j<a.length;j++) {
+                    if (bitmap[i][j] > 1) {
+                        row.push('<td class="m">');
+                    }
+                    else if (bitmap[i][j]) {
+                        row.push('<td class="y">');
+                    }
+                    else {
+                        row.push('<td class="n">');
+                    }
+                    row.push('<a href="#"></a>');                    
+                    row.push('</td>');
+                }
+                row.push('</tr>');
+            }
+            
+            row.push('</table>');
+            $("#bitmap").append(row.join(""));
+
+            
+
+
+
+        var doc_w = $(window).width();
+        var doc_h = $(window).height();
+        // MAKE ME GLOBAL
+
+        tl = $('#timeline');
+
+        var tl_h = 100+TWEET_HEIGHT*HEIGHT;
+
+
+
+        var divisor_w = Math.ceil(tl.width()/doc_w);
+        var divisor_h = Math.ceil(tl.height()/doc_h);
+
+
+        var twdivisor_w = Math.ceil(doc_w/bitmap.length);
+        var twdivisor_h = Math.ceil(tl_h/bitmap[0].length);
+
+        $('#cursor')
+                .width(doc_w/TIME_WIDTH * (tl.width()/doc_w))
+                .height(doc_h/HEIGHT * (3))
+                .css({top:0})
+                .draggable({
+                    containment:[0,0,$(window).width()-120,29],
+                    drag:function(e) {
+                        var go_x = 310 - ( e.pageX * divisor_w ) ;
+                        var go_y = 200 - ( e.pageY * divisor_h * 3 );
+
+                        $('#timeline-table').css({
+                            left: go_x,
+                        })
+                        $('#timeline').css({
+                            left: go_x,
+                            top: go_y
+                        });
+                    }
+
+                });
+
+
+		tl.draggable(
+            {
+                distance:10,
+                cursor:'move',
+
+                drag:function(e) {
+                    $('#cursor').css({
+                        left:( 0 - this.offsetLeft/divisor_w ) + 'px',
+                        top:'0px',
+                        marginTop:( -10 - this.offsetTop/divisor_h ) + 'px'
+                    });
+
+                }
+            }
+        );
+
+
+    }
+        var name = document.location.search.substring(2);
+        if (!name) {
+            name = 'ftrain';
+        }
+        
+//        layout(results);
+
+
+        $("#bigger").live('click', function(e) {
+            CLICK_HEIGHT+=CLICK_HEIGHT;
+            console.log(CLICK_HEIGHT);
+        });
+
+        $("#bigger").live('click', function(e) {
+            CLICK_HEIGHT-=CLICK_HEIGHT;
+            console.log(CLICK_HEIGHT);
+        });
+
+        function doit() {
+            $.getJSON(getUrl(name), {async:false}, function(data){
+                layout(data);
+            });
+        }
+        doit();
+
+
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,6 @@
+[submodule "deps/jquery-tmpl"]
+	path = deps/jquery-tmpl
+	url = https://github.com/jquery/jquery-tmpl.git
+[submodule "dependencies/jquery"]
+	path = dependencies/jquery
+	url = https://github.com/jquery/jquery.git
