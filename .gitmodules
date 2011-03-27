@@ -4,3 +4,9 @@
 [submodule "dependencies/jquery"]
 	path = dependencies/jquery
 	url = https://github.com/jquery/jquery.git
+[submodule "dependencies/jquery-smartresize"]
+	path = dependencies/jquery-smartresize
+	url = https://github.com/lrbabe/jquery-smartresize.git
+[submodule "dependencies/jquery-ui"]
+	path = dependencies/jquery-ui
+	url = https://github.com/jquery/jquery-ui.git
